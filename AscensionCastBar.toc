@@ -2,11 +2,11 @@
 ## Title: Ascension Cast Bar
 ## Author: AkaDoctorCode
 ## Notes: Customised casting bar with integration for Cooldown Manager.
-## Version: 42
+## Version: @project-version@
 ## SavedVariables: AscensionCastBarDB
-## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDualSpec-1.0
 ## IconTexture: Interface\AddOns\AscensionCastBar\Media\AkaDoctorCode.png
-
+## X-Curse-Project-ID: 1405023
+# X-Wago-ID:
 
 # Loading Libraries
 Libs\LibStub\LibStub.lua

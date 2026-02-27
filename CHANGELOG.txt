@@ -1,4 +1,4 @@
-<h1>V42</h1>
+<h1>V43</h1>
 <ul>
-    <li>Fixed: ADDON_ACTION_FORBIDDEN error</li>
+    <li>Added: toggle to turn on/off the size increase animation on empowered spells</li>
 </ul>

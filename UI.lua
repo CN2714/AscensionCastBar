@@ -1,32 +1,32 @@
 -------------------------------------------------------------------------------
 -- Project: AscensionCastBar
--- Author: Aka-DoctorCode 
+-- Author: Aka-DoctorCode
 -- File: UI.lua
--- Version: 42
+-- Version: @project-version@
 -------------------------------------------------------------------------------
 -- Copyright (c) 2025–2026 Aka-DoctorCode. All Rights Reserved.
 --
 -- This software and its source code are the exclusive property of the author.
--- No part of this file may be copied, modified, redistributed, or used in 
+-- No part of this file may be copied, modified, redistributed, or used in
 -- derivative works without express written permission.
 -------------------------------------------------------------------------------
 local ADDON_NAME = "Ascension Cast Bar"
 local AscensionCastBar = LibStub("AceAddon-3.0"):GetAddon(ADDON_NAME)
 local LSM = LibStub("LibSharedMedia-3.0")
 local BAR_BUTTON_CONFIG = {
-    ["ActionBar1"] = { btStart=1, btEnd=12 },
-    ["ActionBar2"] = { btStart=61, btEnd=72 },
-    ["ActionBar3"] = { btStart=49, btEnd=60 },
-    ["ActionBar4"] = { btStart=25, btEnd=36 },
-    ["ActionBar5"] = { btStart=37, btEnd=48 },
-    ["ActionBar6"] = { btStart=145, btEnd=156 },
-    ["ActionBar7"] = { btStart=157, btEnd=168 },
-    ["ActionBar8"] = { btStart=169, btEnd=181 },
-    ["BT4Bonus"]   = { btStart=13, btEnd=24 },
-    ["BT4Class1"]  = { btStart=73, btEnd=84 },
-    ["BT4Class2"]  = { btStart=85, btEnd=96 },
-    ["BT4Class3"]  = { btStart=97, btEnd=108 },
-    ["BT4Class4"]  = { btStart=109, btEnd=120 },
+    ["ActionBar1"] = { btStart = 1, btEnd = 12 },
+    ["ActionBar2"] = { btStart = 61, btEnd = 72 },
+    ["ActionBar3"] = { btStart = 49, btEnd = 60 },
+    ["ActionBar4"] = { btStart = 25, btEnd = 36 },
+    ["ActionBar5"] = { btStart = 37, btEnd = 48 },
+    ["ActionBar6"] = { btStart = 145, btEnd = 156 },
+    ["ActionBar7"] = { btStart = 157, btEnd = 168 },
+    ["ActionBar8"] = { btStart = 169, btEnd = 181 },
+    ["BT4Bonus"]   = { btStart = 13, btEnd = 24 },
+    ["BT4Class1"]  = { btStart = 73, btEnd = 84 },
+    ["BT4Class2"]  = { btStart = 85, btEnd = 96 },
+    ["BT4Class3"]  = { btStart = 97, btEnd = 108 },
+    ["BT4Class4"]  = { btStart = 109, btEnd = 120 },
 }
 
 -- ==========================================================
@@ -42,7 +42,7 @@ function AscensionCastBar:CreateBar()
 
     local castBar = CreateFrame("StatusBar", "AscensionCastBarFrame", self.anchorFrame)
     castBar:SetClipsChildren(false)
-    
+
     local width = self.db.profile.manualWidth or 270
     local height = self.db.profile.manualHeight or 24
     castBar:SetSize(width, height)
@@ -139,7 +139,7 @@ function AscensionCastBar:CreateBar()
 
     -- OnUpdate Loop
     castBar:SetScript("OnUpdate", function(f, elapsed) self:OnFrameUpdate(f, elapsed) end)
-    
+
     -- Inicializar layout del texto
     self:UpdateTextLayout()
 end
@@ -151,29 +151,42 @@ end
 function AscensionCastBar:GetCDMTargetFrame()
     local target = self.db.profile.cdmTarget
     local isBT4 = C_AddOns.IsAddOnLoaded("Bartender4")
-    
-    if target == "Buffs" then return _G["BuffIconCooldownViewer"]
-    elseif target == "Essential" then return _G["EssentialCooldownViewer"]
-    elseif target == "Utility" then return _G["UtilityCooldownViewer"]
-    elseif target == "PlayerFrame" then return _G["PlayerFrame"]
+
+    if target == "Buffs" then
+        return _G["BuffIconCooldownViewer"]
+    elseif target == "Essential" then
+        return _G["EssentialCooldownViewer"]
+    elseif target == "Utility" then
+        return _G["UtilityCooldownViewer"]
+    elseif target == "PlayerFrame" then
+        return _G["PlayerFrame"]
     elseif isBT4 and (BAR_BUTTON_CONFIG[target] or target:find("BT4")) then
-    elseif target == "ActionBar1" then return _G["MainMenuBar"]
-    elseif target == "ActionBar2" then return _G["MultiBarBottomLeft"]
-    elseif target == "ActionBar3" then return _G["MultiBarBottomRight"]
-    elseif target == "ActionBar4" then return _G["MultiBarRight"]
-    elseif target == "ActionBar5" then return _G["MultiBarLeft"]
-    elseif target == "ActionBar6" then return _G["MultiBar5"]
-    elseif target == "ActionBar7" then return _G["MultiBar6"]
-    elseif target == "ActionBar8" then return _G["MultiBar7"]
-    elseif target == "PersonalResource" then return _G["PersonalResourceDisplayFrame"]
+    elseif target == "ActionBar1" then
+        return _G["MainMenuBar"]
+    elseif target == "ActionBar2" then
+        return _G["MultiBarBottomLeft"]
+    elseif target == "ActionBar3" then
+        return _G["MultiBarBottomRight"]
+    elseif target == "ActionBar4" then
+        return _G["MultiBarRight"]
+    elseif target == "ActionBar5" then
+        return _G["MultiBarLeft"]
+    elseif target == "ActionBar6" then
+        return _G["MultiBar5"]
+    elseif target == "ActionBar7" then
+        return _G["MultiBar6"]
+    elseif target == "ActionBar8" then
+        return _G["MultiBar7"]
+    elseif target == "PersonalResource" then
+        return _G["PersonalResourceDisplayFrame"]
     end
-    
+
     return nil
 end
 
 function AscensionCastBar:UpdateAnchor()
     if not self.castBar then return end
-    
+
     local db = self.db.profile
     local testOverride = (self.db.profile.previewEnabled and not self.db.profile.testAttached)
     if not db.attachToCDM or testOverride then
@@ -195,7 +208,7 @@ function AscensionCastBar:UpdateAnchor()
         useProxy = true
         startBtn = btConfig.btStart
         endBtn = btConfig.btEnd
-        
+
         if _G["BT4Button" .. startBtn] then
             btnPrefix = "BT4Button"
         elseif _G["BTButton" .. startBtn] then
@@ -203,7 +216,6 @@ function AscensionCastBar:UpdateAnchor()
         else
             btnPrefix = "BT4Button"
         end
-
     elseif target == "ActionBar1" and not isBT4 then
         useProxy = true
         startBtn = 1
@@ -215,27 +227,26 @@ function AscensionCastBar:UpdateAnchor()
         -- === PROXY MODE ===
         if not self.actionBarProxy then
             self.actionBarProxy = CreateFrame("Frame", nil, UIParent)
-            self.actionBarProxy:SetSize(1,1)
+            self.actionBarProxy:SetSize(1, 1)
             -- OPTIMIZACION DE CPU: Comprobación cada 0.5s en lugar de 0.2s
             self.actionBarProxy:SetScript("OnUpdate", function(f, elapsed)
                 f.timer = (f.timer or 0) + elapsed
-                if f.timer > 0.5 then 
+                if f.timer > 0.5 then
                     f.timer = 0
                     self:UpdateProxyFrame()
                 end
             end)
         end
-        
+
         self.actionBarProxy.btnConfig = { prefix = btnPrefix, startBtn = startBtn, endBtn = endBtn }
         self.actionBarProxy:Show()
         self:UpdateProxyFrame()
-
     else
         -- === STANDARD FRAME MODE ===
         if self.actionBarProxy then self.actionBarProxy:Hide() end
 
         local targetFrame = self:GetCDMTargetFrame()
-        
+
         if targetFrame then
             self.castBar:ClearAllPoints()
             self.castBar:SetPoint("BOTTOM", targetFrame, "TOP", 0, db.cdmYOffset or 0)
@@ -269,7 +280,8 @@ function AscensionCastBar:InitCDMHooks()
 
     -- 2. Check for Proxy Mode (Bartender or ActionBar1)
     local isBT4 = C_AddOns.IsAddOnLoaded("Bartender4")
-    local isProxy = (isBT4 and (BAR_BUTTON_CONFIG[db.cdmTarget] or db.cdmTarget:find("BT4"))) or (db.cdmTarget == "ActionBar1" and not isBT4)
+    local isProxy = (isBT4 and (BAR_BUTTON_CONFIG[db.cdmTarget] or db.cdmTarget:find("BT4"))) or
+    (db.cdmTarget == "ActionBar1" and not isBT4)
 
     if isProxy then
         -- In Proxy Mode, we rely on the OnUpdate script, not hooks
@@ -283,8 +295,8 @@ function AscensionCastBar:InitCDMHooks()
     if targetFrame then
         if self.lastHookedFrame ~= targetFrame then
             self.lastHookedFrame = targetFrame
-            local updateFunc = function() 
-                if self.db.profile.attachToCDM then self:UpdateAnchor() end 
+            local updateFunc = function()
+                if self.db.profile.attachToCDM then self:UpdateAnchor() end
             end
             pcall(function()
                 hooksecurefunc(targetFrame, "SetPoint", updateFunc)
@@ -294,7 +306,9 @@ function AscensionCastBar:InitCDMHooks()
             end)
             self:UpdateAnchor()
         end
-        if self.cdmFinderTimer then self.cdmFinderTimer:Cancel(); self.cdmFinderTimer = nil end
+        if self.cdmFinderTimer then
+            self.cdmFinderTimer:Cancel(); self.cdmFinderTimer = nil
+        end
     else
         if not self.cdmFinderTimer then
             self.cdmFinderTimer = C_Timer.NewTicker(1, function()
@@ -330,29 +344,29 @@ function AscensionCastBar:UpdateBarColor()
     local cb = self.castBar
 
     if not cb.glowFrame then return end
-    
+
     -- Reiniciar estado del glow (se oculta por defecto)
     cb.glowFrame:Hide()
 
     -- 1. EMPOWERED (Lógica especial, mantiene su propio return)
     if cb.isEmpowered and cb.currentStage then
         local s = cb.currentStage
-        local c = db.empowerStage1Color or {0, 1, 0, 1}
-        
-        cb:SetScale(1.0) 
-        
+        local c = db.empowerStage1Color or { 0, 1, 0, 1 }
+
+        cb:SetScale(1.0)
+
         local baseWidth = cb.baseWidth or db.manualWidth or 270
-        local widthMultiplier = 1 + ((s - 1) * 0.05)
+        local widthMultiplier = db.empowerWidthScale and (1 + ((s - 1) * 0.05)) or 1
         cb:SetWidth(baseWidth * widthMultiplier)
 
         if s >= 5 then
-            c = db.empowerStage5Color or {0.8, 0.3, 1, 1}
+            c = db.empowerStage5Color or { 0.8, 0.3, 1, 1 }
         elseif s == 4 then
-            c = db.empowerStage4Color or {1, 0, 0, 1}
+            c = db.empowerStage4Color or { 1, 0, 0, 1 }
         elseif s == 3 then
-            c = db.empowerStage3Color or {1, 0.5, 0, 1}
+            c = db.empowerStage3Color or { 1, 0.5, 0, 1 }
         elseif s == 2 then
-            c = db.empowerStage2Color or {1, 1, 0, 1}
+            c = db.empowerStage2Color or { 1, 1, 0, 1 }
         end
 
         cb:SetStatusBarColor(c[1], c[2], c[3], c[4])
@@ -436,7 +450,7 @@ function AscensionCastBar:UpdateTextLayout()
         cb.textCtx:ClearAllPoints()
         cb.textCtx:SetPoint("CENTER", UIParent, "CENTER", db.textX, db.textY)
         cb.textCtx:SetSize(db.textWidth, db.spellNameFontSize + 10)
-        
+
         local c = db.textBackdropColor
         if db.textBackdropEnabled then
             cb.textCtx.bg:SetColorTexture(c[1], c[2], c[3], c[4])
@@ -447,14 +461,14 @@ function AscensionCastBar:UpdateTextLayout()
         cb.spellName:ClearAllPoints()
         cb.spellName:SetPoint("LEFT", cb.textCtx, "LEFT", 5, 0)
         cb.spellName:SetPoint("RIGHT", cb.timer, "LEFT", -5, 0)
-        
+
         cb.timer:ClearAllPoints()
         cb.timer:SetPoint("RIGHT", cb.textCtx, "RIGHT", -5, 0)
     else
         cb.textCtx:ClearAllPoints()
         cb.textCtx:SetAllPoints(cb)
         cb.textCtx.bg:SetColorTexture(0, 0, 0, 0)
-        
+
         cb.spellName:ClearAllPoints()
         cb.timer:ClearAllPoints()
 
@@ -480,7 +494,7 @@ function AscensionCastBar:ApplyFont()
     local db = self.db.profile
     local cb = self.castBar
     local outline = db.outline or "OUTLINE"
-    
+
     -- Spell Name
     local r, g, b, a = unpack(db.fontColor)
     local sP = LSM:Fetch("font", db.spellNameFontLSM) or self.BAR_DEFAULT_FONT_PATH
@@ -491,7 +505,7 @@ function AscensionCastBar:ApplyFont()
     if not db.useSharedColor and db.timerColor then
         r, g, b, a = unpack(db.timerColor)
     end
-    
+
     local tP = LSM:Fetch("font", db.timerFontLSM) or self.BAR_DEFAULT_FONT_PATH
     cb.timer:SetFont(tP, db.timerFontSize, outline)
     cb.timer:SetTextColor(r, g, b, a)
@@ -500,7 +514,7 @@ end
 function AscensionCastBar:UpdateTextVisibility()
     local cb = self.castBar
     if not cb then return end
-    
+
     local db = self.db.profile
     if db.showSpellText then
         local displayName = cb.lastSpellName or ""
@@ -534,9 +548,9 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
         count = numStages
     elseif spellID then
         if spellID == 234153 then -- Test Mode ID check added back for consistency with Logic.lua/Channel.lua logic
-             count = 5
+            count = 5
         elseif self.CHANNEL_TICKS then
-             count = self.CHANNEL_TICKS[spellID]
+            count = self.CHANNEL_TICKS[spellID]
         end
         if type(count) == "function" then
             count = count(duration)
@@ -549,7 +563,7 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
     local c = db.channelTicksColor
     local thickness = db.channelTicksThickness or 1
     local width = self.castBar:GetWidth()
-    
+
     -- Fallback width if bar is hidden/initializing
     if width <= 10 then width = db.manualWidth or 270 end
 
@@ -582,12 +596,12 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
             end
             tick:ClearAllPoints()
             tick:SetSize(thickness, self.castBar:GetHeight())
-            
+
             local pos = w * i
             if db.reverseChanneling then
                 pos = width - pos
             end
-            
+
             tick:SetPoint("CENTER", self.castBar, "LEFT", pos, 0)
             tick:SetColorTexture(c[1], c[2], c[3], c[4])
             tick:Show()
@@ -621,9 +635,9 @@ function AscensionCastBar:UpdateLatencyBar(castBar)
 
     local _, _, homeMS, worldMS = GetNetStats()
     local ms = math.max(homeMS or 0, worldMS or 0)
-    
+
     if self.castBar.lastSpellName == "Test Spell" then
-        ms = 100 
+        ms = 100
     end
 
     if ms <= 0 then
@@ -668,11 +682,11 @@ end
 
 function AscensionCastBar:UpdateProxyFrame()
     if not self.actionBarProxy or not self.actionBarProxy.btnConfig then return end
-    
+
     local cfg = self.actionBarProxy.btnConfig
     local minX, maxX, minY, maxY
     local found = false
-    
+
     -- Safety check: GetEffectiveScale can return nil in rare loading states
     local uiScale = UIParent:GetEffectiveScale()
     if not uiScale or uiScale <= 0 then uiScale = 1 end
@@ -683,11 +697,11 @@ function AscensionCastBar:UpdateProxyFrame()
             -- Safety check: Ensure button scale is valid
             local btnScale = btn:GetEffectiveScale() or 1
             local l, r, t, b = btn:GetLeft(), btn:GetRight(), btn:GetTop(), btn:GetBottom()
-            
+
             if l and r and t and b then
                 -- Convert to real screen pixels
                 l, r, t, b = l * btnScale, r * btnScale, t * btnScale, b * btnScale
-            
+
                 if not minX or l < minX then minX = l end
                 if not maxX or r > maxX then maxX = r end
                 if not minY or b < minY then minY = b end
@@ -701,17 +715,17 @@ function AscensionCastBar:UpdateProxyFrame()
         -- Convert Real Pixels to UIParent coordinate space
         local width = (maxX - minX) / uiScale
         local height = (maxY - minY) / uiScale
-        
+
         -- Sanity check for dimensions to prevent ScriptRegion errors
         if width < 1 then width = 1 end
         if height < 1 then height = 1 end
-        
+
         local screenCenterX = (minX + maxX) / 2
         local screenCenterY = (minY + maxY) / 2
-        
+
         local anchorX = screenCenterX / uiScale
         local anchorY = screenCenterY / uiScale
-        
+
         self.actionBarProxy:ClearAllPoints()
         self.actionBarProxy:SetPoint("CENTER", UIParent, "BOTTOMLEFT", anchorX, anchorY)
         self.actionBarProxy:SetSize(width, height)
@@ -720,8 +734,8 @@ function AscensionCastBar:UpdateProxyFrame()
         if self.castBar then
             self.castBar:ClearAllPoints()
             self.castBar:SetPoint("BOTTOM", self.actionBarProxy, "TOP", 0, self.db.profile.cdmYOffset or 0)
-            
-            if width > 10 then 
+
+            if width > 10 then
                 self.castBar.baseWidth = width
                 self:UpdateBarColor()
             end
