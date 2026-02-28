@@ -11,6 +11,7 @@
 -- derivative works without express written permission.
 -------------------------------------------------------------------------------
 local ADDON_NAME = "Ascension Cast Bar"
+---@class AscensionCastBar
 local AscensionCastBar = LibStub("AceAddon-3.0"):GetAddon(ADDON_NAME)
 local LSM = LibStub("LibSharedMedia-3.0")
 local BAR_BUTTON_CONFIG = {
@@ -140,8 +141,44 @@ function AscensionCastBar:CreateBar()
     -- OnUpdate Loop
     castBar:SetScript("OnUpdate", function(f, elapsed) self:OnFrameUpdate(f, elapsed) end)
 
-    -- Inicializar layout del texto
+    -- Empower visuals (FCC-style)
+    castBar.empowerStageFrame = CreateFrame("Frame", nil, castBar)
+    castBar.empowerStageFrame:SetAllPoints(castBar)
+    castBar.empowerStageFrame:SetFrameLevel(castBar:GetFrameLevel() + 5)
+    castBar.stagePips = {}
+    castBar.stageTiers = {}
+
+    -- Initialize text layout
     self:UpdateTextLayout()
+
+    -- Hook UpdateSpark to force the Spark's exact position on the texture's edge
+    hooksecurefunc(self, "UpdateSpark", function(addon, prog, sparkProg)
+        local cb = addon.castBar
+        if not cb then return end
+        
+        local tex = cb:GetStatusBarTexture()
+        if not tex then return end
+
+        local reverse = cb.channeling and addon.db.profile.reverseChanneling
+
+        if cb.sparkHead then
+            cb.sparkHead:ClearAllPoints()
+            if reverse then
+                cb.sparkHead:SetPoint("CENTER", tex, "LEFT", 0, 0)
+            else
+                cb.sparkHead:SetPoint("CENTER", tex, "RIGHT", 0, 0)
+            end
+        end
+
+        if cb.sparkGlow then
+            cb.sparkGlow:ClearAllPoints()
+            if reverse then
+                cb.sparkGlow:SetPoint("CENTER", tex, "LEFT", 0, 0)
+            else
+                cb.sparkGlow:SetPoint("CENTER", tex, "RIGHT", 0, 0)
+            end
+        end
+    end)
 end
 
 -- ==========================================================
@@ -228,7 +265,7 @@ function AscensionCastBar:UpdateAnchor()
         if not self.actionBarProxy then
             self.actionBarProxy = CreateFrame("Frame", nil, UIParent)
             self.actionBarProxy:SetSize(1, 1)
-            -- OPTIMIZACION DE CPU: Comprobación cada 0.5s en lugar de 0.2s
+            -- CPU Optimization: Check every 0.5s instead of 0.2s
             self.actionBarProxy:SetScript("OnUpdate", function(f, elapsed)
                 f.timer = (f.timer or 0) + elapsed
                 if f.timer > 0.5 then
@@ -281,7 +318,7 @@ function AscensionCastBar:InitCDMHooks()
     -- 2. Check for Proxy Mode (Bartender or ActionBar1)
     local isBT4 = C_AddOns.IsAddOnLoaded("Bartender4")
     local isProxy = (isBT4 and (BAR_BUTTON_CONFIG[db.cdmTarget] or db.cdmTarget:find("BT4"))) or
-    (db.cdmTarget == "ActionBar1" and not isBT4)
+        (db.cdmTarget == "ActionBar1" and not isBT4)
 
     if isProxy then
         -- In Proxy Mode, we rely on the OnUpdate script, not hooks
@@ -345,10 +382,10 @@ function AscensionCastBar:UpdateBarColor()
 
     if not cb.glowFrame then return end
 
-    -- Reiniciar estado del glow (se oculta por defecto)
+    -- Reset glow state (hidden by default)
     cb.glowFrame:Hide()
 
-    -- 1. EMPOWERED (Lógica especial, mantiene su propio return)
+    -- 1. EMPOWERED (Special logic)
     if cb.isEmpowered and cb.currentStage then
         local s = cb.currentStage
         local c = db.empowerStage1Color or { 0, 1, 0, 1 }
@@ -371,38 +408,38 @@ function AscensionCastBar:UpdateBarColor()
 
         cb:SetStatusBarColor(c[1], c[2], c[3], c[4])
 
-        -- Mostrar glow si estamos en la etapa de mantener (Hold)
+        -- Show glow if we are in the Hold stage
         if s >= (cb.numStages or 4) then
             cb.glowFrame:SetBackdropBorderColor(c[1], c[2], c[3], 1)
             cb.glowFrame:Show()
         end
-        return -- Salimos para no aplicar lógica estándar
+        return -- Exit to avoid applying standard logic
     else
-        -- Restaurar tamaño estándar si no es Empowered
+        -- Restore standard size if not Empowered
         cb:SetScale(1.0)
         cb:SetWidth(cb.baseWidth or db.manualWidth or 270)
     end
 
     ----------------------------------------------------------
-    -- 2. DETERMINAR COLOR DE LA BARRA (Prioridad de colores)
+    -- 2. DETERMINE BAR COLOR (Color Priority)
     ----------------------------------------------------------
     if cb.channeling and db.useChannelColor then
-        -- Caso A: Canalizando con color personalizado
+        -- Case A: Channeling with custom color
         local c = db.channelColor
         cb:SetStatusBarColor(c[1], c[2], c[3], c[4])
     elseif db.useClassColor then
-        -- Caso B: Color de clase (aplica a cast normal o canalizado si no hay custom color)
+        -- Case B: Class color (applies to normal cast or channel without custom color)
         local _, playerClass = UnitClass("player")
         local classColor = C_ClassColor.GetClassColor(playerClass) or { r = 1, g = 1, b = 1 }
         cb:SetStatusBarColor(classColor.r, classColor.g, classColor.b, 1)
     else
-        -- Caso C: Color estándar de la barra
+        -- Case C: Standard bar color
         local c = db.barColor
         cb:SetStatusBarColor(c[1], c[2], c[3], c[4])
     end
 
     ----------------------------------------------------------
-    -- 3. GLOW (Removed Channel Glow per user request)
+    -- 3. GLOW
     ----------------------------------------------------------
     cb.glowFrame:Hide()
 
@@ -411,6 +448,8 @@ function AscensionCastBar:UpdateBarColor()
     ----------------------------------------------------------
     local tex = LSM:Fetch("statusbar", db.barLSMName) or "Interface\\TARGETINGFRAME\\UI-StatusBar"
     cb:SetStatusBarTexture(tex)
+
+    -- In empowered state, tiers are updated in UpdateEmpowerStageHighlight
 end
 
 function AscensionCastBar:UpdateIcon()
@@ -535,7 +574,6 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
     self:HideTicks()
     if not self.db.profile.showChannelTicks then return end
 
-    -- Ensure ticksFrame is properly authorized (CRITICAL FIX FROM PREVIOUS ATTEMPTS)
     if self.castBar.ticksFrame then
         self.castBar.ticksFrame:SetFrameLevel(self.castBar:GetFrameLevel() + 10)
         self.castBar.ticksFrame:Show()
@@ -547,7 +585,7 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
     if isEmpowered then
         count = numStages
     elseif spellID then
-        if spellID == 234153 then -- Test Mode ID check added back for consistency with Logic.lua/Channel.lua logic
+        if spellID == 234153 then
             count = 5
         elseif self.CHANNEL_TICKS then
             count = self.CHANNEL_TICKS[spellID]
@@ -564,7 +602,6 @@ function AscensionCastBar:UpdateTicks(spellID, numStages, duration)
     local thickness = db.channelTicksThickness or 1
     local width = self.castBar:GetWidth()
 
-    -- Fallback width if bar is hidden/initializing
     if width <= 10 then width = db.manualWidth or 270 end
 
     if isEmpowered then
@@ -687,19 +724,16 @@ function AscensionCastBar:UpdateProxyFrame()
     local minX, maxX, minY, maxY
     local found = false
 
-    -- Safety check: GetEffectiveScale can return nil in rare loading states
     local uiScale = UIParent:GetEffectiveScale()
     if not uiScale or uiScale <= 0 then uiScale = 1 end
 
     for i = cfg.startBtn, cfg.endBtn do
         local btn = _G[cfg.prefix .. i]
         if btn and btn:IsShown() then
-            -- Safety check: Ensure button scale is valid
             local btnScale = btn:GetEffectiveScale() or 1
             local l, r, t, b = btn:GetLeft(), btn:GetRight(), btn:GetTop(), btn:GetBottom()
 
             if l and r and t and b then
-                -- Convert to real screen pixels
                 l, r, t, b = l * btnScale, r * btnScale, t * btnScale, b * btnScale
 
                 if not minX or l < minX then minX = l end
@@ -712,11 +746,9 @@ function AscensionCastBar:UpdateProxyFrame()
     end
 
     if found then
-        -- Convert Real Pixels to UIParent coordinate space
         local width = (maxX - minX) / uiScale
         local height = (maxY - minY) / uiScale
 
-        -- Sanity check for dimensions to prevent ScriptRegion errors
         if width < 1 then width = 1 end
         if height < 1 then height = 1 end
 
@@ -730,7 +762,6 @@ function AscensionCastBar:UpdateProxyFrame()
         self.actionBarProxy:SetPoint("CENTER", UIParent, "BOTTOMLEFT", anchorX, anchorY)
         self.actionBarProxy:SetSize(width, height)
 
-        -- Update CastBar
         if self.castBar then
             self.castBar:ClearAllPoints()
             self.castBar:SetPoint("BOTTOM", self.actionBarProxy, "TOP", 0, self.db.profile.cdmYOffset or 0)
@@ -738,7 +769,135 @@ function AscensionCastBar:UpdateProxyFrame()
             if width > 10 then
                 self.castBar.baseWidth = width
                 self:UpdateBarColor()
+                if self.castBar.isEmpowered then
+                    self:AddEmpowerStages(self.castBar.numStages - 1)
+                end
             end
+        end
+    end
+end
+
+-- ==========================================================
+-- FCC EMPOWER VISUALS
+-- ==========================================================
+
+function AscensionCastBar:ClearEmpowerStages()
+    local cb = self.castBar
+    if not cb then return end
+
+    if cb.stagePips then
+        for _, pip in ipairs(cb.stagePips) do
+            pip:Hide()
+        end
+    end
+
+    if cb.stageTiers then
+        for _, tier in ipairs(cb.stageTiers) do
+            if tier.pulse then tier.pulse:Stop() end
+            if tier.tint then tier.tint:Hide() end
+        end
+    end
+end
+
+local STAGE_TINTS = {
+    { 0.20, 0.80, 0.20, 0.4 }, -- Stage 1 (green)
+    { 0.95, 0.85, 0.20, 0.4 }, -- Stage 2 (yellow)
+    { 1.00, 0.55, 0.15, 0.4 }, -- Stage 3 (orange)
+    { 1.00, 0.20, 0.20, 0.4 }, -- Stage 4 (red)
+    { 0.85, 0.35, 1.00, 0.4 }, -- Stage 5+ (purple)
+}
+
+function AscensionCastBar:GetStageTint(i)
+    if STAGE_TINTS[i] then return unpack(STAGE_TINTS[i]) end
+    return 0.95, 0.85, 0.2, 0.4
+end
+
+function AscensionCastBar:AddEmpowerStages(numStages)
+    local cb = self.castBar
+    if not cb or numStages < 2 then return end
+
+    self:ClearEmpowerStages()
+
+    local db = self.db.profile
+    local border = (db.borderEnabled and db.borderThickness) or 0
+    local width = cb:GetWidth() or 270
+    local usableW = math.max(1, width - (border * 2))
+
+    local stageMaxMS = 0
+    local durations = {}
+    for i = 1, cb.numStages do
+        local d = GetUnitEmpowerStageDuration("player", i - 1) or 0
+        if i == cb.numStages then d = GetUnitEmpowerHoldAtMaxTime("player") or 0 end
+        durations[i] = d
+        stageMaxMS = stageMaxMS + d
+    end
+
+    if stageMaxMS <= 0 then return end
+
+    local cumMS = 0
+    for i = 1, cb.numStages do
+        local d = durations[i]
+        local leftPortion = cumMS / stageMaxMS
+        cumMS = cumMS + d
+        local rightPortion = cumMS / stageMaxMS
+
+        local left = border + (usableW * leftPortion)
+        local right = border + (usableW * rightPortion)
+
+        -- Create/Get Tier
+        local tier = cb.stageTiers[i]
+        if not tier then
+            tier = {}
+            tier.tint = cb.empowerStageFrame:CreateTexture(nil, "ARTWORK", nil, 1)
+            tier.tint:SetBlendMode("BLEND")
+
+            -- Simple Pulse Animation
+            tier.pulse = tier.tint:CreateAnimationGroup()
+            local a = tier.pulse:CreateAnimation("Alpha")
+            a:SetFromAlpha(0.8)
+            a:SetToAlpha(0.4)
+            a:SetDuration(0.3)
+            a:SetSmoothing("OUT")
+
+            cb.stageTiers[i] = tier
+        end
+
+        tier.tint:ClearAllPoints()
+        tier.tint:SetPoint("TOPLEFT", cb, "TOPLEFT", left, -border)
+        tier.tint:SetPoint("BOTTOMRIGHT", cb, "BOTTOMLEFT", right, border)
+
+        local r, g, b, a = self:GetStageTint(i)
+        tier.tint:SetColorTexture(r, g, b, a)
+        tier._baseAlpha = a
+        tier.tint:Hide() -- Hidden by default to preserve the standard backdrop
+
+        -- Create/Get Pip (except for the last hold stage which is the end of the bar)
+        if i < cb.numStages then
+            local pip = cb.stagePips[i]
+            if not pip then
+                pip = CreateFrame("Frame", nil, cb.empowerStageFrame, "CastingBarFrameStagePipTemplate")
+                cb.stagePips[i] = pip
+            end
+            pip:ClearAllPoints()
+            pip:SetPoint("TOP", cb, "TOPLEFT", right, -border)
+            pip:SetPoint("BOTTOM", cb, "BOTTOMLEFT", right, border)
+            pip:Show()
+        end
+    end
+end
+
+function AscensionCastBar:UpdateEmpowerStageHighlight(currentStage)
+    local cb = self.castBar
+    if not cb or not cb.stageTiers then return end
+
+    -- Ensure only the active tier is shown and pulsing, keeping the backdrop intact
+    for i, tier in ipairs(cb.stageTiers) do
+        if i == currentStage then
+            tier.tint:Show()
+            if tier.pulse then tier.pulse:Play() end
+        else
+            tier.tint:Hide()
+            if tier.pulse then tier.pulse:Stop() end
         end
     end
 end

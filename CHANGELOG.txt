@@ -1,4 +1,8 @@
-<h1>V43</h1>
+<h1>V44</h1>
 <ul>
-    <li>Added: toggle to turn on/off the size increase animation on empowered spells</li>
+    <li>Libraries have been transfered to AscencionQoL which is going to function as hub for all my addons</li>
+    <li>Fixed: An discrepancy between the cast bar stages and the real stages of an empowered spell.</li>
+    <li>Nil check resolve</li>
+    <li>Undefied Globals resolve</li>
+    <li>TOC update</li>
 </ul>

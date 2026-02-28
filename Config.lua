@@ -11,6 +11,7 @@
 -- derivative works without express written permission.
 -------------------------------------------------------------------------------
 local ADDON_NAME = "Ascension Cast Bar"
+---@class AscensionCastBar
 local AscensionCastBar = LibStub("AceAddon-3.0"):GetAddon(ADDON_NAME)
 local LSM = LibStub("LibSharedMedia-3.0")
 
@@ -34,9 +35,6 @@ end
 
 AscensionCastBar.defaults = {
     profile = {
-        showChannelTicks = true,
-        channelTicksThickness = 1,
-
         height = 24,
         testAttached = false,
 
@@ -207,7 +205,7 @@ AscensionCastBar.defaults = {
 -- ==========================================================
 function AscensionCastBar:SetupOptions()
     local defaults = self.defaults.profile
-    -- Helper para obtener fuentes (Evita errores si LSM no carga)
+    -- Helper to get fonts (Avoids errors if LSM doesn't load)
     local function GetFontList()
         local fonts = {}
         if LSM then
@@ -218,7 +216,7 @@ function AscensionCastBar:SetupOptions()
         return fonts
     end
 
-    -- Helper para obtener texturas (Evita el error AceGUIWidgetLSMlists)
+    -- Helper to get textures (Avoids AceGUIWidgetLSMlists error)
     local function GetStatusBarList()
         local textures = {}
         if LSM then
@@ -244,7 +242,7 @@ function AscensionCastBar:SetupOptions()
         name = "Ascension Cast Bar",
         handler = AscensionCastBar,
         type = "group",
-        childGroups = "tab", -- Interfaz con pestañas
+        childGroups = "tab", -- Tabbed interface
         args = {
             -- ==========================================================
             -- TAB 1: GENERAL (Positioning, Size, Testing)
@@ -840,88 +838,6 @@ function AscensionCastBar:SetupOptions()
                             self.db.profile.timerColor = { unpack(defaults.timerColor) }; self:ApplyFont()
                         end,
                     },
-                    headerTextPos = { name = "Positioning & Backdrop", type = "header", order = 14 },
-                    detachText = {
-                        name = "Detach Text",
-                        type = "toggle",
-                        order = 15,
-                        get = function(info) return self.db.profile.detachText end,
-                        set = function(info, val)
-                            self.db.profile.detachText = val; self:UpdateTextLayout()
-                        end,
-                    },
-                    textX = {
-                        name = "X Offset",
-                        type = "range",
-                        min = -200,
-                        max = 200,
-                        step = 1,
-                        order = 16,
-                        hidden = function() return not self.db.profile.detachText end,
-                        get = function(info) return self.db.profile.textX end,
-                        set = function(info, val)
-                            self.db.profile.textX = val; self:UpdateTextLayout()
-                        end,
-                    },
-                    textY = {
-                        name = "Y Offset",
-                        type = "range",
-                        min = -200,
-                        max = 200,
-                        step = 1,
-                        order = 17,
-                        hidden = function() return not self.db.profile.detachText end,
-                        get = function(info) return self.db.profile.textY end,
-                        set = function(info, val)
-                            self.db.profile.textY = val; self:UpdateTextLayout()
-                        end,
-                    },
-                    textWidth = {
-                        name = "Text Area Width",
-                        type = "range",
-                        min = 50,
-                        max = 500,
-                        step = 1,
-                        order = 18,
-                        hidden = function() return not self.db.profile.detachText end,
-                        get = function(info) return self.db.profile.textWidth end,
-                        set = function(info, val)
-                            self.db.profile.textWidth = val; self:UpdateTextLayout()
-                        end,
-                    },
-                    textBackdropEnabled = {
-                        name = "Enable Backdrop",
-                        type = "toggle",
-                        order = 19,
-                        get = function(info) return self.db.profile.textBackdropEnabled end,
-                        set = function(info, val)
-                            self.db.profile.textBackdropEnabled = val; self:UpdateTextLayout()
-                        end,
-                    },
-                    textBackdropColor = {
-                        name = "Backdrop Color",
-                        type = "color",
-                        hasAlpha = true,
-                        order = 36,
-                        hidden = function() return not self.db.profile.textBackdropEnabled end,
-                        get = function(info)
-                            local c = self.db.profile.textBackdropColor; return c[1], c[2], c[3], c[4]
-                        end,
-                        set = function(info, r, g, b, a)
-                            self.db.profile.textBackdropColor = { r, g, b, a }; self:UpdateTextLayout()
-                        end,
-                    },
-                    textBackdropColorReset = {
-                        name = "Reset",
-                        type = "execute",
-                        width = "half",
-                        order = 36.1,
-                        hidden = function() return not self.db.profile.textBackdropEnabled end,
-                        func = function()
-                            self.db.profile.textBackdropColor = { unpack(defaults.textBackdropColor) }; self
-                                :UpdateTextLayout()
-                        end,
-                    },
                     -- TEXT POSITIONING & BACKDROP
                     headerTextPos = { name = "Positioning & Backdrop", type = "header", order = 30 },
                     detachText = {
@@ -1308,61 +1224,6 @@ function AscensionCastBar:SetupOptions()
                             if not self.db.profile.animationParams[val] then
                                 self.db.profile.animationParams[val] = CopyTable(self.ANIMATION_STYLE_PARAMS[val])
                             end
-                        end,
-                    },
-                    headerGlobalFX = { name = "Global Glow & Offsets", type = "header", order = 2.1 },
-                    glowColor = {
-                        name = "Global Glow Color",
-                        type = "color",
-                        hasAlpha = true,
-                        order = 2.2,
-                        get = function(info)
-                            local c = self.db.profile.glowColor; return c[1], c[2], c[3], c[4]
-                        end,
-                        set = function(info, r, g, b, a)
-                            self.db.profile.glowColor = { r, g, b, a }; self:UpdateSparkColors()
-                        end,
-                    },
-                    glowIntensity = {
-                        name = "Glow Intensity",
-                        type = "range",
-                        min = 0,
-                        max = 5,
-                        step = 0.1,
-                        order = 2.3,
-                        get = function(info) return self.db.profile.glowIntensity end,
-                        set = function(info, val) self.db.profile.glowIntensity = val end,
-                    },
-                    headLengthOffset = {
-                        name = "Head Offset (Global)",
-                        type = "range",
-                        min = -100,
-                        max = 100,
-                        step = 1,
-                        order = 2.4,
-                        get = function(info) return self.db.profile.headLengthOffset end,
-                        set = function(info, val) self.db.profile.headLengthOffset = val end,
-                    },
-                    tailOffset = {
-                        name = "Tail Offset (Global)",
-                        type = "range",
-                        min = -100,
-                        max = 100,
-                        step = 1,
-                        order = 2.41,
-                        get = function(info) return self.db.profile.tailOffset end,
-                        set = function(info, val) self.db.profile.tailOffset = val end,
-                    },
-                    tailLength = {
-                        name = "Tail Length (Global)",
-                        type = "range",
-                        min = 10,
-                        max = 500,
-                        step = 1,
-                        order = 2.42,
-                        get = function(info) return self.db.profile.tailLength end,
-                        set = function(info, val)
-                            self.db.profile.tailLength = val; self:UpdateSparkSize()
                         end,
                     },
                     enableSpark = {
@@ -1783,7 +1644,7 @@ function AscensionCastBar:SetupOptions()
                                 get = function(info) return self.db.profile.animationParams["Pulse"].rippleCycle end,
                                 set = function(info, val) self.db.profile.animationParams["Pulse"].rippleCycle = val end,
                             },
-                            pulseFadeSpeed = { -- RESTAURADO: Faltaba
+                            pulseFadeSpeed = { -- RESTORED: Was missing
                                 name = "Fade Speed",
                                 type = "range",
                                 min = 0.1,
@@ -1817,7 +1678,7 @@ function AscensionCastBar:SetupOptions()
                                 get = function(info) return self.db.profile.animationParams["Starfall"].swayAmount end,
                                 set = function(info, val) self.db.profile.animationParams["Starfall"].swayAmount = val end,
                             },
-                            starfallParticleSpeed = { -- RESTAURADO: Faltaba
+                            starfallParticleSpeed = { -- RESTORED: Was missing
                                 name = "Particle Speed",
                                 type = "range",
                                 min = 0.1,
@@ -1851,7 +1712,7 @@ function AscensionCastBar:SetupOptions()
                                 get = function(info) return self.db.profile.animationParams["Flux"].jitterX end,
                                 set = function(info, val) self.db.profile.animationParams["Flux"].jitterX = val end,
                             },
-                            fluxDrift = { -- RESTAURADO: Faltaba
+                            fluxDrift = { -- RESTORED: Was missing
                                 name = "Drift Speed",
                                 type = "range",
                                 min = 0,
